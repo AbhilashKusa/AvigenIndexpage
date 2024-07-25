@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avigen Index Form</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .space-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 50%;
+        }
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 50%,rgba(255,255,255,0) 100%);
+            transform: rotate(-45deg);
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        form {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        label, input {
+            display: block;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        input {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem;
+            color: #fff;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: #000;
+            color: #fff;
+        }
+        .multi-select-container {
+            margin-bottom: 1rem;
+        }
+        .multi-select-container label {
+            margin-bottom: 0.5rem;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        .tag {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tag.selected {
+            background-color: #fff;
+            color: #000;
+            transform: scale(1.05);
+        }
+        .search-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.5rem;
+            padding-right: 30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            border-radius: 5px;
+        }
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .note {
+            font-size: 0.8rem;
+            color: #ffcc00;
+            text-align: center;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="space-background"></div>
+    <div class="container">
+        <form id="avigenForm">
+            <h2>Avigen Index Form</h2>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+
+            <div class="multi-select-container">
+                <label>Select words that best describe you:</label>
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search words...">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <div class="tag-list" id="wordList"></div>
+            </div>
+
+            <input type="submit" value="Submit">
+            <p class="note">Please note: If you are unsure about any term or concept, we encourage you to utilize online resources to research and select the most appropriate option for your response.</p>
+        </form>
+    </div>
+
+    <script>
+        const words = [
+            "Dependable", "Patient", "Individualistic", "Articulate", "Consistent", 
+            "Daring", "Harmonious", "Optimistic", "Thoughtful", "Logical", 
+            "Particular", "Influential", "Cautious", "Industrious", "Agreeable", 
+            "Responsive", "Avid", "Conscientious", "Insistent", "Relaxed", 
+            "Apprehensive", "Humorous", "Refined", "Determined", "Stylish", 
+            "Contented", "Compliant", "Emotional", "Calm", "Gregarious", 
+            "Trusting", "Dominant", "Dutiful", "Enthusiastic", "Meticulous", 
+            "Sarcastic", "Casual", "Courteous", "Distinguished", "Competitive", 
+            "Tolerant", "Humane", "Flexible", "Charismatic", "Precise", 
+            "Tenacious", "Nice", "Diligent", "Inspiring", "Unyielding", 
+            "Reserved", "Brave", "Balanced", "Upbeat", "Polite", 
+            "Assertive", "Accommodating", "Smooth", "Driving", "Considerate", 
+            "Sentimental", "Engaging", "Cooperative", "Possessive", "Peaceful", 
+            "Popular", "Pleasant", "Worrying", "Dreamer", "Sophisticated", 
+            "Tactful", "Easygoing", "Humble", "Bold", "Admired", 
+            "Shy", "Friendly", "Serious", "Aloof", "Enterprising", 
+            "Prominent", "Compassionate", "Benevolent", "Aggressive", "Captivating", 
+            "Conventional", "Giving", "Resourceful", "Passive", "Convincing", 
+            "Adamant", "Unassuming"
+        ];
+
+        const wordList = document.getElementById('wordList');
+        const searchInput = document.querySelector('.search-input');
+
+        function createTags() {
+            words.forEach(word => {
+                const tag = document.createElement('div');
+                tag.classList.add('tag');
+                tag.textContent = word;
+                tag.addEventListener('click', () => {
+                    tag.classList.toggle('selected');
+                    anime({
+                        targets: tag,
+                        scale: [1, 1.2, 1],
+                        duration: 300,
+                        easing: 'easeInOutQuad'
+                    });
+                });
+                wordList.appendChild(tag);
+            });
+        }
+
+        function filterTags() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const tags = wordList.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                const word = tag.textContent.toLowerCase();
+                if (word.includes(searchTerm)) {
+                    tag.style.display = 'inline-block';
+                } else {
+                    tag.style.display = 'none';
+                }
+            });
+        }
+
+        createTags();
+        searchInput.addEventListener('input', filterTags);
+
+        // Create starry background
+        const spaceBackground = document.querySelector('.space-background');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.width = `${Math.random() * 2}px`;
+            star.style.height = star.style.width;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            spaceBackground.appendChild(star);
+        }
+
+        // Create shooting stars
+        for (let i = 0; i < 5; i++) {
+            const shootingStar = document.createElement('div');
+            shootingStar.classList.add('shooting-star');
+            shootingStar.style.left = `${Math.random() * 100}%`;
+            shootingStar.style.top = `${Math.random() * 100}%`;
+            spaceBackground.appendChild(shootingStar);
+        }
+
+        // Animate stars
+        anime({
+            targets: '.star',
+            opacity: [
+                { value: 0, duration: 0, delay: anime.stagger(50) },
+                { value: 1, duration: 500 },
+                { value: 0, duration: 500 },
+            ],
+            scale: [
+                { value: 1, duration: 0, delay: anime.stagger(50) },
+                { value: 1.5, duration: 500 },
+                { value: 1, duration: 500 },
+            ],
+            loop: true,
+            easing: 'easeInOutQuad',
+        });
+
+        // Animate shooting stars
+        anime({
+            targets: '.shooting-star',
+            translateX: ['-100%', '100%'],
+            translateY: ['100%', '-100%'],
+            opacity: [0, 1, 0],
+            duration: 4000,
+            delay: anime.stagger(2000),
+            loop: true,
+            easing: 'easeOutQuad',
+        });
+
+        // Animate form appearance
+        anime({
+            targets: 'form',
+            opacity: [0, 1],
+            translateY: [50, 0],
+            duration: 1000,
+            easing: 'easeOutExpo'
+        });
+
+        // Form submission
+        document.getElementById('avigenForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const selectedWords = Array.from(document.querySelectorAll('.tag.selected')).map(tag => tag.textContent);
+
+            // Generate PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add Avigen logo (you'll need to replace this with your actual logo)
+            // doc.addImage('path/to/avigen-logo.png', 'PNG', 10, 10, 40, 40);
+
+            // Set font styles
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(0, 0, 0);
+
+            // Add title
+            doc.text("Avigen Index Form Results", 105, 20, null, null, "center");
+
+            // Reset font for body text
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+
+            // Add form data
+            doc.text(`Name: ${name}`, 20, 40);
+            doc.text(`Email: ${email}`, 20, 50);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("Selected Words:", 20, 70);
+            doc.setFont("helvetica", "normal");
+
+            // Add selected words
+            let yPosition = 80;
+            selectedWords.forEach((word, index) => {
+                doc.text(`• ${word}`, 30, yPosition);
+                yPosition += 10;
+                if (yPosition > 280) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+            });
+
+            // Add footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.text(`Page ${i} of ${pageCount}`, 105, 290, null, null, "center");
+            }
+
+            // Save the PDF
+            const pdfData = doc.output('datauristring');
+
+            // Prepare data for sending
+            const data = {
+                name: name,
+                email: email,
+                words: selectedWords,
+                pdfData: pdfData,
+                recipientEmail: "kusa.abhilash@gmail.com" // Replace with your email
+            };
+
+            // Send data to server
+            fetch('/.netlify/functions/sendEmail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Form submitted successfully! A PDF has been sent to kusa.abhilash@gmail.com');
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
